@@ -12,4 +12,5 @@
 - name: Ping servers from clients to initiate and test connection
   shell: ping -c 4 -w 6 {{ wireguard_subnet + hostvars[item]['wireguard_ip_end']|string }}
   ignore_errors: true
-  loop: "{{ groups['wireguard_servers'] }}"
+  changed_when: false
+  loop: '{{ groups[wireguard_group_name + "_servers"] }}'
