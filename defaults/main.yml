@@ -15,3 +15,7 @@ wireguard_config_hostnames: no
 
 wireguard_debian_enable_backports: true
 wireguard_debian_pin_packages: true
+
+wireguard_init_keys: true
+wireguard_install_locally: false
+wireguard_vault_password_file: "{{ DEFAULT_VAULT_PASSWORD_FILE }}"

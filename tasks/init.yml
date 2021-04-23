@@ -1,0 +1,34 @@
+
+- name: Setup Wireguard locally
+  delegate_to: localhost
+  include_tasks: setup.yml
+  when: wireguard_install_locally
+
+- name: Setting wireguard local vars facts
+  set_fact:
+    wireguard_local_host_vars: host_vars/{{ inventory_hostname }}/{{ wireguard_interface_name }}
+    wireguard_secret_name: "secret_wireguard_{{ wireguard_interface_name }}_{{ inventory_hostname }}_privkey"
+
+- name: Create wireguard local vars folder
+  file:
+    state: directory
+    recurse: yes
+    path: "{{ wireguard_local_host_vars }}"
+  delegate_to: localhost
+
+
+- name: Generate missing private keys
+  delegate_to: localhost
+  shell: 'echo -n "secret_wireguard_{{ wireguard_interface_name }}_{{ inventory_hostname }}_privkey: " > {{ wireguard_local_host_vars }}/privkey.yml && wg genkey >> {{ wireguard_local_host_vars }}/privkey.yml'
+  creates: "{{ wireguard_local_host_vars }}/privkey.yml"
+
+- name: Read private keys
+  include_vars: "{{ wireguard_local_host_vars }}/privkey.yml"
+
+- name: Generate missing associated public keys
+  delegate_to: localhost
+  shell: 'echo -n "wireguard_{{ wireguard_interface_name }}_{{ inventory_hostname }}_privkey: " > {{  wireguard_local_host_vars }}/pubkey.yml ; echo "{{ secret_wireguard_{{ wireguard_interface_name }}_{{ inventory_hostname }}_privkey }}" | wg pubkey >> {{  wireguard_local_host_vars }}/pubkey.yml"'
+
+- name: Encrypt private keys
+  shell: "ansible-vault encrypt --vault-id default --vault-password-file {{ wireguard_vault_password_file }} {{ wireguard_local_host_vars }}/privkey.yml"
+  delegate_to: localhost
